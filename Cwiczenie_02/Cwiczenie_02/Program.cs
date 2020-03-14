@@ -7,50 +7,135 @@ using System.Xml.Serialization;
 namespace Cwiczenie_02
 {
     class Program
+    
+    
+       
+    
     {
         static void Main(string[] args)
         {
-            string file = "dane.csv";
 
-            FileInfo f  = new FileInfo(file);
-            // StreamReader stream = new StreamReader(f.OpenRead());
+            string f;
+            int a = args.Length;
 
+            if(a == 0 || args[0].Equals(""))
+            {
+                f = "dane.csv";
+            }
+            else
+            {
+                f = args[0];
+            }
 
-            var m = new Dictionary<String, int>();
+            string res;
 
+            if (a < 2 || args[1].Equals(""))
+            {
+                res = "result.xml";
+            }
+            else
+            {
+                res = args[1];
+            }
+            if (a == 3 && !args[2].Equals("xml"))
+            {
+                Console.WriteLine("FILE FORMAT IS INVALID!!!!!");
+                return;
+            }
+            string file2 = "log.txt";
 
-            
-            //virtual - override
-            string file2 = @"Data\dane.csv";
-            using (StreamReader stream = new StreamReader(f.OpenRead())) {
-                String line = "";
-                while ((line = stream.ReadLine()) != null)
+            StreamWriter streamWriter = null;
+            streamWriter = new StreamWriter(file2);
+
+            FileInfo fi = new FileInfo(f);
+            List<Student> los = new List<Student>();
+            Dictionary<string, int> stud = new Dictionary<string, int>();
+            try
+            {
+                using (StreamReader stream = new StreamReader(fi.OpenRead()))
                 {
 
-                    string[] studentWiersz = line.Split(',');
-                    Console.WriteLine(line);
+
+                    string line = "";
+                    while ((line = stream.ReadLine()) != null)
+                    {
+                        string[] studentWiersz = line.Split(",");
+                        //Console.WriteLine(line);
+                        if (studentWiersz.Length == 9)
+                        {
+                            bool t = true;
+
+                            foreach (string str in studentWiersz)
+                            {
+                                if (str.Equals(""))
+                                    t = false;
+                            }
+
+                            if (t)
+                            {
+                                Studies s = new Studies
+                                {
+                                    name = studentWiersz[2],
+                                    mode = studentWiersz[3],
+                                };
+
+                                var stu = new Student
+                                {
+                                    firstname = studentWiersz[0],
+                                    surname = studentWiersz[1],
+                                    index = int.Parse(studentWiersz[4]),
+                                    studies = s,
+                                    date = studentWiersz[5],
+                                    email = studentWiersz[6],
+                                    fatherName = studentWiersz[8],
+                                    motherName = studentWiersz[7]
+                                };
+                                los.Add(stu);
+
+                                if (stud.ContainsKey(s.name))
+                                {
+                                    stud[s.name]++;
+                                }
+                                else
+                                {
+                                    stud.Add(s.name, 1);
+                                }
+                            }
+                            else
+                            {
+                                streamWriter.WriteLine("nieprawidłowa struktura danych:" + line);
+                            }
+                        }
+                        else
+                        {
+                            streamWriter.WriteLine("nieprawidłowa struktura danych:" + line);
+                        }
+                    }
                 }
-
             }
-            // stream.Dispose();
-
-
-            //xml
-
-            FileStream writer = new FileStream(@"data.xml", FileMode.Create);
-            XmlSerializer serializer = new XmlSerializer(typeof(List<Student>), 
-                                       new XmlRootAttribute("uczelnia"));
-
-            var list = new List<Student>();
-            var st = new Student
+            catch (FileNotFoundException e)
             {
-                Imie = "Jan",
-                Nazwisko = "Kowalski",
-                Email = "kowalski@wp.pl"
-            };
-            list.Add(st);
-            serializer.Serialize(writer, list);
+                Console.WriteLine("FileNotFoundException(\"Plik nazwa nie istnieje\")");
+                streamWriter.WriteLine("FileNotFoundException(\"Plik nazwa nie istnieje\")");
+                return;
+            }
+            catch (ArgumentException e1)
+            {
+                Console.WriteLine("ArgumentException(\"Podana ścieżka jest niepoprawna\")");
+                streamWriter.WriteLine("ArgumentException(\"Podana ścieżka jest niepoprawna\")");
+                return;
+            }
+            catch (Exception e2)
+            {
+                Console.WriteLine(e2.Message);
+                streamWriter.WriteLine(e2.Message);
+                return;
+            }
+            streamWriter.Flush();
+            streamWriter.Close();
 
+            FileStream writer = new FileStream(@res, FileMode.Create);
+            XmlRootAttribute rotatr = new XmlRootAttribute("studenci");
         }
     }
 }
